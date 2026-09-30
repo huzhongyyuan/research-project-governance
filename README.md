@@ -16,6 +16,8 @@
 - [任务记录](references/records.md)：派发—进行—完成的统一格式与验收门槛。
 - [精简汇报](references/reporting.md)：实验五行摘要、科研周报和有来源的常问问题准备。
 - [存量接入](references/intake.md)：先盘点，再渐进建档，不搬动既有产物。
+- [过程与算力安全](references/operations.md)：按精确身份停进程、启动核验、非交互环境、共享算力、有依据的预计时间、逐例完成判定。
+- [评测公平性](references/evaluation.md)：打分器冻结、链路等价与对照组、条件冻结、补充组单列、结果隔离、受控诊断实验。
 - [空模板](assets/templates/)：任务、实验、文献、主张、决策、交接、周报等。
 - [只读审计工具](scripts/records.py)：检查任务卡结构并生成 TODO 文本。
 
