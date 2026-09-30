@@ -1,0 +1,6 @@
+interface:
+  display_name: "科研项目治理 · 三省六部"
+  short_description: "梳理新旧科研项目，协调多 Agent，统一讨论、TODO、实验与论文证据记录"
+  default_prompt: "使用 $research-project-governance 梳理这个科研项目，先核实目标、现有执行者与证据，再按需建立轻量记录，不干扰在途任务。"
+policy:
+  allow_implicit_invocation: true
