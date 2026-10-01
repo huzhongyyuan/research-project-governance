@@ -157,6 +157,50 @@ class RecordsTests(unittest.TestCase):
         self.card(verified_at='2026-09-28T20:00:00+08:00')
         self.assertTrue(any('freshness' in w for w in self.report()[0]['warnings']))
 
+    def write_log(self, text, name='management/LOG.md'):
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding='utf-8')
+        return path
+
+    def test_log_valid_events(self):
+        self.write_log('# 日志\n\n- 2026-09-30T10:00+08:00｜开工｜E-1 首例完成｜run.log｜2h 后核对\n'
+                       '2026-09-30T12:00+08:00｜验收｜50/50 例通过｜eval.json｜无\n')
+        report = records.audit_log(self.root)
+        self.assertEqual((report['errors'], report['warnings']), ([], []))
+        self.assertEqual(report['event_count'], 2)
+        self.assertTrue(report['last_event_at'].startswith('2026-09-30T12:00'))
+
+    def test_log_malformed_lines_warn_only(self):
+        self.write_log('2026-09-30T10:00+08:00｜开工｜缺字段\n'
+                       '2026-09-30T10:00｜开工｜无时区｜r｜n\n'
+                       '2026-09-30T11:00+08:00｜开工｜变化｜｜下一步\n'
+                       '```\n2026-09-30T10:00+08:00｜示例｜a｜b｜c\n```\n')
+        report = records.audit_log(self.root)
+        self.assertFalse(report['errors'])
+        joined = ' '.join(report['warnings'])
+        for expected in ('expected 5 fields', 'timezone', 'empty field'):
+            self.assertIn(expected, joined)
+        self.assertEqual(report['event_count'], 2)
+
+    def test_log_falls_back_to_handoff(self):
+        self.write_log('2026-09-30T10:00+08:00｜开工｜a｜b｜c\n', 'HANDOFF.md')
+        self.assertEqual(records.audit_log(self.root)['log'], 'HANDOFF.md')
+
+    def test_log_missing_is_unknown(self):
+        report = records.audit_log(self.root)
+        self.assertFalse(report['errors'])
+        self.assertTrue(any('unknown' in w for w in report['warnings']))
+
+    def test_log_path_escape(self):
+        self.assertTrue(records.audit_log(self.root, '../x.md')['errors'])
+
+    def test_log_does_not_mutate(self):
+        path = self.write_log('2026-09-30T10:00+08:00｜开工｜a｜b｜c\n')
+        before = path.read_bytes()
+        records.audit_log(self.root)
+        self.assertEqual(before, path.read_bytes())
+
 
 if __name__ == '__main__':
     unittest.main()

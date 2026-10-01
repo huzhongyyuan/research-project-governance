@@ -221,6 +221,70 @@ def audit(root, tasks_dir='management/tasks'):
     return result, records
 
 
+LOG_CANDIDATES = ('management/LOG.md', 'HANDOFF.md')
+
+
+def audit_log(root, log_path=None):
+    """Check rolling event-log lines: 时间｜事件｜变化｜证据｜下一步. Never edits."""
+    root = Path(root).resolve()
+    result = {'scope': str(root), 'checked_at': datetime.now(timezone.utc).isoformat(),
+              'log': None, 'event_count': 0, 'last_event_at': None, 'errors': [], 'warnings': [],
+              'verification': 'Line format only; not whether events happened or evidence is true.'}
+    errors, warnings = result['errors'], result['warnings']
+    if not root.is_dir():
+        errors.append('project root is not a directory')
+        return result
+    candidates = (log_path,) if log_path else LOG_CANDIDATES
+    for candidate in candidates:
+        relative = Path(candidate)
+        path = root / relative
+        if relative.is_absolute() or '..' in relative.parts or not inside(path, root):
+            errors.append('log path must resolve within project root')
+            return result
+        if path.is_symlink():
+            errors.append(candidate + ': symlink log is not read')
+            return result
+        if path.is_file():
+            break
+    else:
+        warnings.append('No event log found (' + ', '.join(candidates) + '); project status is unknown.')
+        return result
+    result['log'] = relative.as_posix()
+    try:
+        lines = path.read_text(encoding='utf-8').splitlines()
+    except (OSError, UnicodeDecodeError) as exc:
+        errors.append(result['log'] + ': ' + str(exc))
+        return result
+    latest = None
+    fenced = False
+    for number, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if stripped.startswith(('```', '~~~')):
+            fenced = not fenced
+            continue
+        if fenced or '｜' not in stripped or stripped.startswith(('#', '`', '>')):
+            continue
+        fields = [f.strip() for f in re.sub(r'^[-*]\s+', '', stripped).split('｜')]
+        where = result['log'] + ':' + str(number)
+        try:
+            when = timestamp(fields[0])
+        except ValueError as exc:
+            warnings.append(where + ': first field is not a timestamp (' + str(exc) + ')')
+            continue
+        result['event_count'] += 1
+        if latest is None or when > latest:
+            latest = when
+        if len(fields) != 5:
+            warnings.append(where + ': expected 5 fields, found ' + str(len(fields)))
+        elif not all(fields[1:]):
+            warnings.append(where + ': empty field; write 无 when there is no evidence or next step')
+    if latest:
+        result['last_event_at'] = latest.isoformat()
+    elif not errors:
+        warnings.append('Log has no parseable events; project status is unknown.')
+    return result
+
+
 def render_todo(result, records):
     if result['errors']:
         raise ValueError('Cannot generate TODO from invalid records')
@@ -246,10 +310,15 @@ def render_todo(result, records):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=('audit', 'todo'))
+    parser.add_argument('command', choices=('audit', 'todo', 'log'))
     parser.add_argument('root')
     parser.add_argument('--tasks-dir', default='management/tasks')
+    parser.add_argument('--log', help='event log path relative to root')
     args = parser.parse_args(argv)
+    if args.command == 'log':
+        result = audit_log(args.root, args.log)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 1 if result['errors'] else 0
     result, records = audit(args.root, args.tasks_dir)
     if args.command == 'audit' or result['errors']:
         print(json.dumps(result, ensure_ascii=False, indent=2))

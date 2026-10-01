@@ -25,7 +25,7 @@
 
 先读取指定实验的 RECORD、Run、协议及真实指标/日志；只看训练结束或 Agent final 不足以验收。记录不全则报缺项，不补造配置或数值。
 
-详细事实继续保存在 `management/experiments/E-xxx/RECORD.md`，复用 [实验模板](../assets/templates/experiment.md)。给用户的默认摘要可压缩为五行：
+详细事实按记录分级保存：轻量档的短实验记在滚动事件日志，标准档以上用 `management/experiments/E-xxx/RECORD.md`（[实验模板](../assets/templates/experiment.md)）。给用户的默认摘要可压缩为五行：
 
 1. 结论：本次回答的问题；有效支持、有效负结果、证据不足或技术失败。
 2. 结果：相对哪个基线、在什么数据/协议上、关键指标与差值、重复/波动；附原始证据。
