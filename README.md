@@ -14,7 +14,7 @@
 
 - [SKILL.md](SKILL.md)：入口、适用范围和权限边界。
 - [任务记录](references/records.md)：派发—进行—完成的统一格式与验收门槛。
-- [精简汇报](references/reporting.md)：实验五行摘要、科研周报和有来源的常问问题准备。
+- [精简汇报](references/reporting.md)：实验六项格式（背景、设置、分析、demo、结论、TODO）、周二/周五更新的科研周报和有来源的常问问题准备。
 - [存量接入](references/intake.md)：先盘点，再渐进建档，不搬动既有产物。
 - [过程与算力安全](references/operations.md)：按精确身份停进程、启动核验、非交互环境、共享算力、有依据的预计时间、逐例完成判定。
 - [评测公平性](references/evaluation.md)：打分器冻结、链路等价与对照组、条件冻结、补充组单列、结果隔离、受控诊断实验。
