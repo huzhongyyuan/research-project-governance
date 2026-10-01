@@ -23,7 +23,7 @@ def timestamp(value):
 
 
 FENCE = re.compile(r'^(`{3,}|~{3,})')
-EVENT_START = re.compile(r'^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}')
+EVENT_START = re.compile(r'^\d{4}-?\d{2}-?\d{2}')  # date-like start; timestamp() validates the rest
 
 
 def unfenced(lines):
@@ -45,7 +45,8 @@ def read_inside(root, relative):
     """Read root/relative without following any symlink, from the same descriptors that were checked."""
     parts = Path(relative).parts
     flags = os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
-    fd = os.open(root, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+    # root is already resolved; refuse it if it has since been swapped for a symlink.
+    fd = os.open(root, flags | getattr(os, 'O_DIRECTORY', 0))
     try:
         for part in parts[:-1]:
             child = os.open(part, flags | getattr(os, 'O_DIRECTORY', 0), dir_fd=fd)

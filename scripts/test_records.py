@@ -238,6 +238,21 @@ class RecordsTests(unittest.TestCase):
                     records.read_inside(self.root, relative)
             self.assertTrue(records.audit_log(self.root, 'linked/LOG.md')['errors'])
 
+    def test_log_bad_or_compact_timestamps(self):
+        self.write_log('2026-09-30T1O:00+08:00｜验收｜a｜b｜c\n'
+                       '20260930T110000+0800｜验收｜a｜b｜c\n')
+        report = records.audit_log(self.root)
+        self.assertEqual(report['event_count'], 1)
+        self.assertTrue(any('not a timestamp' in w for w in report['warnings']))
+
+    def test_read_inside_rejects_symlinked_root(self):
+        link = Path(self.temp.name + '-link')
+        link.symlink_to(self.root)
+        self.addCleanup(link.unlink)
+        self.write_log('2026-09-30T10:00+08:00｜开工｜a｜b｜c\n')
+        with self.assertRaises(OSError):
+            records.read_inside(link, 'management/LOG.md')
+
 
 if __name__ == '__main__':
     unittest.main()
