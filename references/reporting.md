@@ -91,6 +91,15 @@
 
 **整理杂乱周报时**：按日期抽出每个实验，归入六项；同一实验的多次记录合并成一条，保留日期；学习笔记移到“资料与笔记”；原文缺的项写“待补”，不编造。数字照原文转录并附来源；没有重新核验的只在该条末尾标“（转录，未复核）”，不在全文堆免责说明。发现前后矛盾（如同一 run 的口径不一致）写进该条 TODO。
 
+**贴到飞书**：不要直接粘贴 Markdown 原文，飞书会把表格显示成竖线文本。先转成富文本再粘贴：
+
+```bash
+python3 /path/to/research-project-governance/scripts/feishu_paste.py 周报.md   # macOS：复制为富文本，到飞书 Cmd+V
+python3 /path/to/research-project-governance/scripts/feishu_paste.py 周报.md --output 周报.html   # 其他系统：浏览器打开后全选复制
+```
+
+表格、标题、加粗、列表会变成飞书原生格式。周报正文不写 HTML 注释和模板提示语；路径用 `code` 包起来即可。新建整篇文档也可以用飞书的“导入 → Markdown”。
+
 获准保存时写项目内 `management/reports/weekly/YYYY-Www.md`；同周修订直接在原文更新并保留日期。写好不等于已发送，不自动创建周报定时器或发给导师。
 
 ## 给其他同学使用

@@ -90,6 +90,8 @@ python3 /path/to/research-project-governance/scripts/records.py todo /path/to/pr
 
 `log` 默认依次查找 `management/LOG.md`、`HANDOFF.md`，可用 `--log relative/path` 指定；格式不符的行只给警告，不改文件。`todo` 只输出到标准输出，需保存时先检查原文件再用编辑工具更新，不盲目重定向覆盖。任务目录可用 `--tasks-dir relative/path` 映射。检查通过只表示记录结构一致，不证明远端证据、真实质量或授权。
 
+周报贴飞书时用 `scripts/feishu_paste.py 周报.md` 转成富文本放进剪贴板（macOS），表格才会变成飞书原生表格；它只读报告文件、只写剪贴板，用法见精简汇报。
+
 ## 完成本轮
 
 默认结论先行：一句当前结论、最重要的1–3项变化及证据入口、最小下一步；需要用户决定时才单列推荐方案和理由。内部先核查是否验收、相对上次的实际增量、对研究主张的价值、偏离/重复/冲突、阻塞与下一检查点；时间估计有依据才给。不要把自查清单全展开，也不为回答潜在追问新增实验或权限。
