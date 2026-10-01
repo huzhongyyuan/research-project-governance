@@ -30,7 +30,7 @@
 | management/discussions/日期-主题.md 或 Q-xxx/ | 讨论事实、提案、分歧；需要时多份独立意见 | discussion.md / opinion.md |
 | management/decisions/D-xxx.md | 已确认选择、理由、来源、影响与替代关系 | decision.md |
 | management/handovers/H-xxx.md | 长中断/换 owner 时的检查点、运行和禁止重复项 | handover.md |
-| management/reports/weekly/YYYY-Www.md | 本周实验进展（每个实验六项）、卡点、下一步；派生视图，至少周二、周五晚更新 | weekly-report.md |
+| management/reports/weekly/YYYY-Www.md | 本周实验进展（每个实验六项）、卡点、下一步；派生视图，至少周二、周五晚更新 | weekly-report.md；示例 assets/examples/weekly-report-example.md |
 | figures/F-xxx/RECORD.md | 关联主张、真实数据、脚本、选择规则、检查记录 | figure.md |
 | paper/OUTLINE.md | 中心论证，各节→主张/图表/缺口映射；不复制正文 | 本文论文格式 |
 | reviews/RV-xxx.md | 被审版本、严重度、依据、修复与复核 | review.md |

@@ -18,7 +18,7 @@
 - [存量接入](references/intake.md)：先盘点，再渐进建档，不搬动既有产物。
 - [过程与算力安全](references/operations.md)：按精确身份停进程、启动核验、非交互环境、共享算力、有依据的预计时间、逐例完成判定。
 - [评测公平性](references/evaluation.md)：打分器冻结、链路等价与对照组、条件冻结、补充组单列、结果隔离、受控诊断实验。
-- [空模板](assets/templates/)：任务、实验、文献、主张、决策、交接、周报等。
+- [空模板](assets/templates/)：任务、实验、文献、主张、决策、交接、周报等；[周报示例](assets/examples/weekly-report-example.md)为虚构数据。
 - [只读审计工具](scripts/records.py)：检查轻量档事件日志格式、任务卡结构，并生成 TODO 文本。
 
 按风险分级：轻量工作记入项目滚动事件日志；纳入治理的任务（标准档及以上）每项一张权威卡。事件格式为：
