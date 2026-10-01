@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Read-only structural checks and TODO rendering; Python 3 standard library."""
 import argparse
+import os
+import stat
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -18,6 +20,44 @@ def timestamp(value):
     if result.tzinfo is None:
         raise ValueError('timezone is required')
     return result
+
+
+FENCE = re.compile(r'^(`{3,}|~{3,})')
+EVENT_START = re.compile(r'^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}')
+
+
+def unfenced(lines):
+    """Yield (number, line) outside fenced code; a fence closes only on the same char, >= length."""
+    opener = None
+    for number, line in enumerate(lines, 1):
+        match = FENCE.match(line.strip())
+        if opener is None:
+            if match:
+                opener = match[1]
+                continue
+            yield number, line
+        elif match and match[1][0] == opener[0] and len(match[1]) >= len(opener) \
+                and line.strip() == match[1]:
+            opener = None
+
+
+def read_inside(root, relative):
+    """Read root/relative without following any symlink, from the same descriptors that were checked."""
+    parts = Path(relative).parts
+    flags = os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
+    fd = os.open(root, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+    try:
+        for part in parts[:-1]:
+            child = os.open(part, flags | getattr(os, 'O_DIRECTORY', 0), dir_fd=fd)
+            os.close(fd)
+            fd = child
+        handle = os.open(parts[-1], flags, dir_fd=fd)
+    finally:
+        os.close(fd)
+    with os.fdopen(handle, 'rb') as stream:
+        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+            raise OSError('not a regular file')
+        return stream.read().decode('utf-8')
 
 
 def parse(text):
@@ -42,13 +82,7 @@ def parse(text):
     criteria = []
     sections = 0
     active = False
-    fenced = False
-    for line in lines[end + 1:]:
-        if line.strip().startswith(('```', '~~~')):
-            fenced = not fenced
-            continue
-        if fenced:
-            continue
+    for _, line in unfenced(lines[end + 1:]):
         if re.match(r'^#{1,2}\s', line):
             active = line.strip() == '## 验收清单'
             sections += int(active)
@@ -107,7 +141,7 @@ def audit(root, tasks_dir='management/tasks'):
             errors.append(label + ': path escapes project root')
             continue
         try:
-            data, criteria = parse(path.read_text(encoding='utf-8'))
+            data, criteria = parse(read_inside(root, path.relative_to(root)))
         except (ValueError, OSError) as exc:
             errors.append(label + ': ' + str(exc))
             continue
@@ -251,21 +285,25 @@ def audit_log(root, log_path=None):
         return result
     result['log'] = relative.as_posix()
     try:
-        lines = path.read_text(encoding='utf-8').splitlines()
+        lines = read_inside(root, relative).splitlines()
     except (OSError, UnicodeDecodeError) as exc:
         errors.append(result['log'] + ': ' + str(exc))
         return result
     latest = None
-    fenced = False
-    for number, line in enumerate(lines, 1):
+    for number, line in unfenced(lines):
         stripped = line.strip()
-        if stripped.startswith(('```', '~~~')):
-            fenced = not fenced
+        if stripped.startswith(('#', '`', '>')):
             continue
-        if fenced or '｜' not in stripped or stripped.startswith(('#', '`', '>')):
+        body = re.sub(r'^[-*]\s+', '', stripped)
+        if '｜' not in body:
+            if EVENT_START.match(body):
+                warnings.append(result['log'] + ':' + str(number) +
+                                ': looks like an event but lacks full-width ｜ separators')
             continue
-        fields = [f.strip() for f in re.sub(r'^[-*]\s+', '', stripped).split('｜')]
+        fields = [f.strip() for f in body.split('｜')]
         where = result['log'] + ':' + str(number)
+        if not EVENT_START.match(fields[0]):
+            continue  # ordinary prose may contain ｜
         try:
             when = timestamp(fields[0])
         except ValueError as exc:

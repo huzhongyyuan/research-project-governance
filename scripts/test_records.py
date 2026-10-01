@@ -201,6 +201,43 @@ class RecordsTests(unittest.TestCase):
         records.audit_log(self.root)
         self.assertEqual(before, path.read_bytes())
 
+    def test_log_wrong_separator_warns(self):
+        self.write_log('2026-09-30T10:00+08:00｜开工｜a｜b｜c\n'
+                       '2026-09-30T11:00+08:00 | 开工 | ascii | b | c\n'
+                       '- 2026-09-30T12:00+08:00 没有分隔符\n'
+                       '普通说明里也可以出现 A｜B，不算事件\n')
+        report = records.audit_log(self.root)
+        self.assertEqual(report['event_count'], 1)
+        self.assertEqual(sum('separators' in w for w in report['warnings']), 2)
+        self.assertEqual(len(report['warnings']), 2)
+
+    def test_log_fence_variants(self):
+        event = '2026-09-30T10:00+08:00｜示例｜a｜b｜c\n'
+        self.write_log('````md\n```\n' + event + '````\n'
+                       '~~~\n```\n' + event + '~~~\n'
+                       '```\n' + event)
+        report = records.audit_log(self.root)
+        self.assertEqual(report['event_count'], 0)
+
+    def test_fence_inside_task_card(self):
+        path = self.card()
+        path.write_text(path.read_text().replace(
+            '- [x] Confirm receipt', '````\n```\n- [x] Example\n````\n- [x] Real check'))
+        report, cards = self.report()
+        self.assertFalse(report['errors'])
+        self.assertEqual(cards[0]['criteria'], [(True, 'Real check')])
+
+    def test_read_inside_rejects_symlinks(self):
+        with tempfile.TemporaryDirectory() as other:
+            outside = Path(other) / 'LOG.md'
+            outside.write_text('2026-09-30T10:00+08:00｜外部｜a｜b｜c\n')
+            (self.root / 'linked').symlink_to(other)
+            (self.root / 'management/LOG.md').symlink_to(outside)
+            for relative in ('linked/LOG.md', 'management/LOG.md'):
+                with self.assertRaises(OSError):
+                    records.read_inside(self.root, relative)
+            self.assertTrue(records.audit_log(self.root, 'linked/LOG.md')['errors'])
+
 
 if __name__ == '__main__':
     unittest.main()
